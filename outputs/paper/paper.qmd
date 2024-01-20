@@ -1,17 +1,23 @@
 ---
-title: "My title"
-subtitle: "My subtitle if needed"
-author: 
-  - First author
-  - Another author
-thanks: "Code and data are available at: LINK."
+title: "Police Arrests and Ethnic Background"
+author: "Aviral Bhardwaj"
 date: today
 date-format: long
-abstract: "First sentence. Second sentence. Third sentence. Fourth sentence."
-format: pdf
 number-sections: true
+format: pdf
 bibliography: references.bib
 ---
+
+```{r}
+#| echo: false
+# All the required packages
+## Installing Packages only needs to be done once
+
+#install.packages("tidyverse")
+#install.packages("tinytex")
+#install.packages("opendatatoronto")
+# install.packages("kableExtra")
+```
 
 ```{r}
 #| include: false
@@ -19,203 +25,135 @@ bibliography: references.bib
 #| message: false
 
 library(tidyverse)
-library(palmerpenguins)
+library(opendatatoronto)
+library(tinytex)
+library(knitr)
+library(dplyr)
+library(ggplot2)
+library(janitor)
+```
+
+```{r}
+#| warning: false
+#| message: false
+#| include: false
+
+# Get package data
+	
+# get package
+package <- show_package("police-race-and-identity-based-data-collection-arrests-strip-searches")
+package
+ 
+# get all resources for this package
+resources <- list_package_resources("police-race-and-identity-based-data-collection-arrests-strip-searches")
+ 
+# identify datastore resources; by default, Toronto Open Data sets datastore resource format to CSV for non-geospatial and GeoJSON for geospatial resources
+datastore_resources <- filter(resources, tolower(format) %in% c('csv', 'geojson'))
+ 
+# load the first datastore resource as a sample
+data <- filter(datastore_resources, row_number()==1) %>% get_resource()
+
+# Save the data in CSV
+write.csv(data, "../data/raw_data.csv")
 ```
 
 
-# Introduction
-
-You can and should cross-reference sections and sub-sections. 
-
-The remainder of this paper is structured as follows. @sec-data....
+## Introduction
 
 
+## Data 
+This data is sourced from the Toronto Open Data Portal `opendatatoronto` [@rOpenDataToronto]. The following data is utilized for a more in-depth analysis of arrests and strip searches involving various ethnic and identity-based groups in Toronto. The information is gathered by the Toronto Police Service (TPS) and is collected under the authority of the Police Services Act. Its purpose is to enhance comprehension of the relationship between the police and the community. The data covers the period from 2020 to 2021.
 
-# Data {#sec-data}
+The data underwent cleaning and analysis using the R programming language [@r]. Cleaning was performed with the `tidyverse` package [@rTidyverse], involving the removal of unnecessary columns for the analysis. Subsequently, analysis was conducted utilizing the `dplyr` package [@rDplyr], with the data grouped by ethnic and identity-based categories. Visualization was then executed using the `ggplot2` package [@rGgplot2], depicting the number of arrests and strip searches across various ethnic and identity-based groups.
 
-Some of our data is of penguins (@fig-bills), from @palmerpenguins.
+The raw data included 32,000 arrests data with 26 variables of analyzable data, that included variables such as Arrest year, Arrest_Month, Perceived Race, Age Group, Youth at Arrest and Booked which we will be using for the paper.
 
 ```{r}
-#| label: fig-bills
-#| fig-cap: Bills of penguins
-#| echo: false
+#| warning: false
+#| message: false
+#| include: false
+# Adjusting and cleaning the name of the variable
+cleaned_data <- data %>% 
+  clean_names() %>% 
+  clean_names(case = "snake")
 
-ggplot(penguins, aes(x = island, fill = species)) +
-  geom_bar(alpha = 0.8) +
-  scale_fill_manual(values = c("darkorange","purple","cyan4"),
-                    guide = "none") +
+# Isolating the columns that are needed for the analysis
+cleaned_data <- cleaned_data |>
+  select(arrest_year, arrest_month, perceived_race, age_group_at_arrest, youth_at_arrest_under_18_years, booked)
+
+# Renaming the columns
+cleaned_data <- cleaned_data |>
+  rename(youth = youth_at_arrest_under_18_years, age_group = age_group_at_arrest)
+
+# Saving the cleaned data
+write.csv(cleaned_data, "../data/cleaned_data.csv")
+```
+
+```{r}
+#| warning: false
+#| message: false
+#| include: false
+# Make a table of the data with the number of arrests and strip searches by ethinic and identity based groups for the year 2020, and 2021
+cleaned_data <- read.csv("../data/cleaned_data.csv")
+
+# Mutating the date for age groups involving Aged 17 years and younger and Aged 17 years and under essentially they mean the same thing
+cleaned_data <- cleaned_data %>%
+  mutate(age_group = case_when(
+    age_group == "Aged 17 years and younger" ~ "Under 18 years",
+    age_group == "Aged 17 years and under" ~ "Under 18 years",
+    TRUE ~ age_group
+  ))
+
+# List of the ethnic and identity based groups that are in the data
+# ethnic_backgrounds <- cleaned_data |> select(perceived_race) |> unique() 
+
+# List of the years that are in the data
+# years <- cleaned_data |> select(arrest_year) |> unique()
+
+# List of the age groups that are in the data
+# age_groups <- cleaned_data |> select(age_group) |> unique()
+
+write.csv(cleaned_data, "../data/cleaned_data.csv")
+```
+
+```{r}
+#| warning: false
+#| message: false
+#| echo: false
+# Generate a table of the data with the number of arrests and strip searches by ethinic and identity based groups for the year 2020, and 2021
+cleaned_data <- read.csv("../data/cleaned_data.csv")
+
+table1 <- cleaned_data |> 
+  group_by(arrest_year, perceived_race) |> 
+  summarise(n = n(), .groups = "drop") |> 
+  arrange(desc(n)) |> 
+  pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0)
+
+kable(table1,
+      caption = "Number of arrests by ethinic background for the year 2020, and 2021",
+      align = "c",
+      col.names = c("Ethinic and Identity Based Groups", "2020", "2021"),
+      booktabs = TRUE)
+
+ggplot(
+  table1, aes(x = `perceived_race`, y = `2020`, fill = `2021`)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Number of arrests by ethinic background for the year 2020, and 2021",
+       x = "Ethinic and Identity Based Groups",
+       y = "Number of Arrests") +
   theme_minimal() +
-  facet_wrap(~species, ncol = 1) +
-  coord_flip()
-```
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  scale_fill_gradient(low = "blue", high = "red") +
+  theme(plot.title = element_text(hjust = 0.5))
 
-Talk more about it.
-
-And also planes (@fig-planes). (You can change the height and width, but don't worry about doing that until you have finished every other aspect of the paper - Quarto will try to make it look nice and the defaults usually work well once you have enough text.)
-
-```{r}
-#| label: fig-planes
-#| fig-cap: Relationship between wing length and width
-#| echo: false
-#| warning: false
-#| message: false
-
-analysis_data <- read_csv(here::here("outputs/data/analysis_data.csv"))
-
-analysis_data |> 
-  ggplot(aes(x = width, y = length)) +
-  geom_point(alpha = 0.8) +
-  theme_minimal() +
-  labs(x = "Wing width (mm)",
-       y = "Wing length (mm)")
-```
-
-Talk way more about it. 
-
-
-
-# Model
-
-The goal of our modelling strategy is twofold. Firstly,...
-
-Here we briefly describe the Bayesian analysis model used to investigate... Background details and diagnostics are included in [Appendix -@sec-model-details].
-
-## Model set-up
-
-Define $y_i$ as the number of seconds that the plane remained aloft. Then $\beta_i$ is the wing width and $\gamma_i$ is the wing length, both measured in millimeters.  
-
-\begin{align} 
-y_i|\mu_i, \sigma &\sim \mbox{Normal}(\mu_i, \sigma) \\
-\mu_i &= \alpha + \beta_i + \gamma_i\\
-\alpha &\sim \mbox{Normal}(0, 2.5) \\
-\beta &\sim \mbox{Normal}(0, 2.5) \\
-\gamma &\sim \mbox{Normal}(0, 2.5) \\
-\sigma &\sim \mbox{Exponential}(1)
-\end{align}
-
-We run the model in R [@citeR] using the `rstanarm` package of @rstanarm. We use the default priors from `rstanarm`.
-
-
-### Model justification
-
-We expect a positive relationship between the size of the wings and time spent aloft. In particular...
-
-We can use maths by including latex between dollar signs, for instance $\theta$.
-
-
-# Results
-
-Our results are summarized in @tbl-modelresults.
-
-```{r}
-#| echo: false
-#| eval: true
-#| warning: false
-#| message: false
-
-library(rstanarm)
-
-first_model <-
-  readRDS(file = here::here("outputs/models/first_model.rds"))
 ```
 
 ```{r}
-#| echo: false
-#| eval: true
-#| label: tbl-modelresults
-#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
-#| warning: false
 
-modelsummary::modelsummary(
-  list(
-    "First model" = first_model
-  ),
-  statistic = "mad",
-  fmt = 2
-)
 ```
 
 
+## References
 
-
-# Discussion
-
-## First discussion point {#sec-first-point}
-
-If my paper were 10 pages, then should be be at least 2.5 pages. The discussion is a chance to show off what you know and what you learnt from all this. 
-
-## Second discussion point
-
-## Third discussion point
-
-## Weaknesses and next steps
-
-Weaknesses and next steps should also be included.
-
-\newpage
-
-\appendix
-
-# Appendix {-}
-
-
-# Additional data details
-
-# Model details {#sec-model-details}
-
-## Posterior predictive check
-
-In @fig-ppcheckandposteriorvsprior-1 we implement a posterior predictive check. This shows...
-
-In @fig-ppcheckandposteriorvsprior-2 we compare the posterior with the prior. This shows... 
-
-```{r}
-#| eval: true
-#| echo: false
-#| message: false
-#| warning: false
-#| label: fig-ppcheckandposteriorvsprior
-#| layout-ncol: 2
-#| fig-cap: "Examining how the model fits, and is affected by, the data"
-#| fig-subcap: ["Posterior prediction check", "Comparing the posterior with the prior"]
-
-pp_check(first_model) +
-  theme_classic() +
-  theme(legend.position = "bottom")
-
-posterior_vs_prior(first_model) +
-  theme_minimal() +
-  scale_color_brewer(palette = "Set1") +
-  theme(legend.position = "bottom") +
-  coord_flip()
-```
-
-## Diagnostics
-
-@fig-stanareyouokay-1 is a trace plot. It shows... This suggests...
-
-@fig-stanareyouokay-2 is a Rhat plot. It shows... This suggests...
-
-```{r}
-#| echo: false
-#| eval: true
-#| message: false
-#| warning: false
-#| label: fig-stanareyouokay
-#| fig-cap: "Checking the convergence of the MCMC algorithm"
-#| fig-subcap: ["Trace plot", "Rhat plot"]
-#| layout-ncol: 2
-
-plot(first_model, "trace")
-
-plot(first_model, "rhat")
-```
-
-
-
-\newpage
-
-
-# References
 
 
