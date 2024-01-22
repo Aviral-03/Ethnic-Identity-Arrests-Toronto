@@ -17,6 +17,7 @@ bibliography: references.bib
 #install.packages("tinytex")
 #install.packages("opendatatoronto")
 # install.packages("kableExtra")
+# install.packages("patchwork")
 ```
 
 ```{r}
@@ -31,6 +32,7 @@ library(knitr)
 library(dplyr)
 library(ggplot2)
 library(janitor)
+library(patchwork)
 ```
 
 ```{r}
@@ -72,29 +74,32 @@ The raw data included 32,000 arrests data with 26 variables of analyzable data, 
 #| warning: false
 #| message: false
 #| include: false
+
 # Adjusting and cleaning the name of the variable
 cleaned_data <- data %>% 
   clean_names() %>% 
   clean_names(case = "snake")
 
-# Isolating the columns that are needed for the analysis
 cleaned_data <- cleaned_data |>
-  select(arrest_year, arrest_month, perceived_race, age_group_at_arrest, youth_at_arrest_under_18_years, booked)
+  select(
+    arrest_year, perceived_race, age_group_at_arrest, youth_at_arrest_under_18_years, booked, search_reason_cause_injury, search_reason_assist_escape, search_reason_possess_weapons, search_reason_possess_evidence)
 
-# Renaming the columns
-cleaned_data <- cleaned_data |>
-  rename(youth = youth_at_arrest_under_18_years, age_group = age_group_at_arrest)
+# Combining the columns that are similar
+cleaned_data <- cleaned_data %>%
+  mutate(search_reason = case_when(
+    search_reason_cause_injury == 1 ~ "1",
+    search_reason_assist_escape == 1 ~ "1",
+    search_reason_possess_weapons == 1 ~ "1",
+    search_reason_possess_evidence == 1 ~ "1",
+    TRUE ~ "0"
+  ))
 
-# Saving the cleaned data
-write.csv(cleaned_data, "../data/cleaned_data.csv")
-```
-
-```{r}
-#| warning: false
-#| message: false
-#| include: false
-# Make a table of the data with the number of arrests and strip searches by ethinic and identity based groups for the year 2020, and 2021
-cleaned_data <- read.csv("../data/cleaned_data.csv")
+# Rename the columns
+cleaned_data <- cleaned_data %>%
+  rename(
+    age_group = age_group_at_arrest,
+    youth_at_arrest_under_18_years = youth_at_arrest_under_18_years
+  )
 
 # Mutating the date for age groups involving Aged 17 years and younger and Aged 17 years and under essentially they mean the same thing
 cleaned_data <- cleaned_data %>%
@@ -103,6 +108,30 @@ cleaned_data <- cleaned_data %>%
     age_group == "Aged 17 years and under" ~ "Under 18 years",
     TRUE ~ age_group
   ))
+
+# Mutating for booked with NA values
+cleaned_data <- cleaned_data %>%
+  mutate(booked = case_when(
+    is.na(booked) ~ "0",
+    booked == 1 ~ "1",
+    TRUE ~ "Not Booked"
+  ))
+
+cleaned_data <- cleaned_data |>
+  select(
+    arrest_year, perceived_race, age_group, youth_at_arrest_under_18_years, booked, search_reason)
+
+write.csv(cleaned_data, "../data/cleaned_data.csv")
+
+```
+
+```{r}
+#| warning: false
+#| message: false
+#| include: false
+# Make a table of the data with the number of arrests and strip searches by ethinic and identity based groups for the year 2020, and 2021
+# cleaned_data <- read.csv("../data/cleaned_data.csv")
+
 
 # List of the ethnic and identity based groups that are in the data
 # ethnic_backgrounds <- cleaned_data |> select(perceived_race) |> unique() 
@@ -114,6 +143,32 @@ cleaned_data <- cleaned_data %>%
 # age_groups <- cleaned_data |> select(age_group) |> unique()
 
 write.csv(cleaned_data, "../data/cleaned_data.csv")
+```
+
+
+```{r}
+cleaned_data <- read.csv("../data/cleaned_data.csv")
+
+table <- cleaned_data |>
+  group_by(arrest_year, perceived_race, search_reason) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  arrange(desc(perceived_race)) %>%
+  pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0)
+
+table <- pivot_longer(table, cols = c("2020", "2021"), names_to = "year", values_to = "value")
+
+ggplot(table, aes(x = perceived_race, y = value, fill = factor(search_reason))) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_wrap(~ year, scales = "free_y") +
+  labs(title = "Percent Stacked Bar Chart Based on 'booked'",
+       x = "Perceived Race",
+       y = "Percentage",
+       fill = "Search Reason") +
+  theme_minimal() +
+  scale_fill_discrete(labels = c("Not Searched", "Searched")) +
+  theme(legend.position = "right") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
 ```
 
 ```{r}
@@ -129,29 +184,135 @@ table1 <- cleaned_data |>
   arrange(desc(n)) |> 
   pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0)
 
+
 kable(table1,
       caption = "Number of arrests by ethinic background for the year 2020, and 2021",
       align = "c",
       col.names = c("Ethinic and Identity Based Groups", "2020", "2021"),
       booktabs = TRUE)
 
-ggplot(
-  table1, aes(x = `perceived_race`, y = `2020`, fill = `2021`)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Number of arrests by ethinic background for the year 2020, and 2021",
-       x = "Ethinic and Identity Based Groups",
-       y = "Number of Arrests") +
+table1_long <- pivot_longer(table1, cols = c("2020", "2021"), names_to = "year", values_to = "value")
+```
+
+```{r}
+#| warning: false
+#| message: false
+#| echo: false
+table2 <- cleaned_data |>
+  filter(booked == 1) |>
+  group_by(arrest_year, perceived_race) |>
+  summarise(n = n(), .groups = "drop") |>
+  arrange(desc(n)) |>
+  pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0)
+
+
+kable(table2,
+      caption = "Arrests Booked by ethnic background for the year 2020, and 2021",
+      align = "c",
+      col.names = c("Ethinic and Identity Based Groups", "2020", "2021"),
+      booktabs = TRUE)
+
+table2_long <- pivot_longer(table2, cols = c("2020", "2021"), names_to = "year", values_to = "value")
+```
+
+```{r}
+#| warning: false
+#| message: false
+#| echo: false
+cleaned_data <- read.csv("../data/cleaned_data.csv")
+
+cleaned_data <- cleaned_data |>
+  select(
+    arrest_year,
+    perceived_race,
+    booked
+  )
+
+# Group 
+cleaned_data <- cleaned_data %>%
+  group_by(arrest_year, perceived_race, booked) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  arrange(desc(perceived_race)) %>%
+  pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0)
+
+cleaned_data <- pivot_longer(cleaned_data, cols = c("2020", "2021"), names_to = "year", values_to = "value")
+```
+
+```{r police_arrests, fig.cap = "Number of arrests by ethinic background for the year 2020, and 2021", fig.width=10, fig.height=6, fig.align='center'}
+ggplot(cleaned_data, aes(x = perceived_race, y = value, fill = factor(booked))) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~ year, scales = "free_y") +
+  labs(title = "Stacked Bar Chart Based on 'booked'",
+       x = "Perceived Race",
+       y = "Value",
+       fill = "Booked") +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  scale_fill_gradient(low = "blue", high = "red") +
-  theme(plot.title = element_text(hjust = 0.5))
+  scale_fill_discrete(labels = c("Not Booked", "Booked")) +
+  theme(legend.position = "right") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
 
 ```{r}
+#| warning: false
+#| message: false
+#| echo: false
+cleaned_data <- read.csv("../data/cleaned_data.csv")
+cleaned_data <- cleaned_data |>
+  select(
+    arrest_year,
+    perceived_race,
+    age_group
+  )
+
+# Group 
+cleaned_data <- cleaned_data %>%
+  group_by(arrest_year, perceived_race, age_group) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  arrange(desc(perceived_race)) %>%
+  pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0)
+
+
+cleaned_data <- pivot_longer(cleaned_data, cols = c("2020", "2021"), names_to = "year"  ,values_to = "value")
+```
+
+```{r fig2, fig.cap = "Number of arrests by ethinic background for the year 2020, and 2021", fig.width=10, fig.height=6, fig.align='center'}
+#| warning: false
+#| message: false
+#| echo: false
+#| eval: true
+# Dot Plot
+ggplot(cleaned_data, aes(x = perceived_race, y = value, fill = factor(age_group))) +
+  geom_dotplot(binaxis = "y", stackdir = "center", dotsize = 0.7, binwidth = 80) +
+  facet_wrap(~ year, scales = "free_y") +
+  labs(title = "Stacked Bar Chart Based on 'booked'",
+       x = "Perceived Race",
+       y = "Value",
+       fill = "Booked") +
+  theme_minimal() +
+  theme(legend.position = "bottom") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
 
+```{r fig3, fig.cap = "Number of arrests by ethinic background for the year 2020, and 2021", fig.width=10, fig.height=6, fig.align='center'}
+#| warning: false
+#| message: false
+#| echo: false
+#| eval: true
+# Bar plot
+ggplot(cleaned_data, aes(x = perceived_race, y = value, fill = factor(age_group))) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~ year, scales = "free_y") +
+  labs(title = "Stacked Bar Chart Based on 'booked'",
+       x = "Perceived Race",
+       y = "Value",
+       fill = "Booked") +
+  theme_minimal() +
+  theme(legend.position = "right") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
 
 ## References
 
