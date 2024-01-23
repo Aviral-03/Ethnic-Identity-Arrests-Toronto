@@ -6,6 +6,7 @@ date: today
 date-format: long
 number-sections: true
 format: pdf
+toc: true
 bibliography: references.bib
 ---
 
@@ -109,8 +110,8 @@ cleaned_data <- cleaned_data %>%
 # Mutating the date for age groups involving Aged 17 years and younger and Aged 17 years and under essentially they mean the same thing
 cleaned_data <- cleaned_data %>%
   mutate(age_group = case_when(
-    age_group == "Aged 17 years and younger" ~ "Under 18 years",
-    age_group == "Aged 17 years and under" ~ "Under 18 years",
+    age_group == "Aged 17 years and younger" ~ "Aged 17 years and under",
+    age_group == "Aged 17 years and under" ~ "Aged 17 years and under",
     TRUE ~ age_group
   ))
 
@@ -306,6 +307,7 @@ table2_long <-
   group_by(arrest_year, perceived_race, booked) %>%
   summarise(n = n(), .groups = "drop") %>%
   arrange(desc(perceived_race)) %>%
+  filter(!(perceived_race == "None")) %>%
   pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0)
 
 table2_long <- pivot_longer(table2_long, cols = c("2020", "2021"), names_to = "year", values_to = "value")
@@ -325,7 +327,9 @@ ggplot(table2_long, aes(x = perceived_race, y = value, fill = factor(booked))) +
 
 
 ### Number of Arrests by Age Group for the year 2020-2021
-As seen in Figure 3, the data indicates a non-uniform distribution of arrests across age groups, with the age group of 25 to 34 years and age group 35 to 44 exhibiting the highest number of arrests in both 2020 and 2021. Furthermore, the data indicates a decrease in the number of arrests for the top two age groups from 2020 to 2021. However, a contrasting trend emerges for other age groups, where the number of arrests has increased over the same time period.
+As depicted in Figure 3, the data reveals a non-uniform distribution of arrests across age groups, with the age groups of 25 to 34 years and 35 to 44 years exhibiting the highest number of arrests in both 2020 and 2021. Furthermore, there is a notable decrease in the number of arrests for these top two age groups from 2020 to 2021. In contrast, a different trend emerges for other age groups, where the number of arrests has increased over the same time period.
+
+Examining Figure 4, which illustrates the dot plot for the number of arrests by age group in the year 2020 and 2021 for the top two ethnic groups, "Black" and "White," it becomes evident that the age group 25 to 34 years represents the highest number of arrests for individuals of Black ethnicity. The trend for Black ethnicity indicates a decreasing curve from this age group onward. In contrast, for individuals of White ethnicity, the peak in arrests is observed in the age group 35 to 44 years. It is noteworthy that from age 45 to 65, the difference in the number of arrests between both ethnicities starts to converge.
 
 ```{r}
 #| warning: false
@@ -352,36 +356,30 @@ ggplot(table3_long, aes(x = perceived_race, y = value, fill = factor(age_group))
   theme(legend.position = "right") + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-table3_age_24_long <- pivot_longer(table3_small, cols = c("2020", "2021"), names_to = "year", values_to = "value")
-
-age_35_44 <- cleaned_data %>%
-  filter(age_group == "Aged 35 to 44 years") |>
-  group_by(arrest_year, perceived_race, age_group) %>%
-  summarise(n = n(), .groups = "drop") |>
-  arrange(desc(n)) |>
-  pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0) |>
+table3_ii <- table3 %>%
+  filter(perceived_race %in% c("White", "Black")) %>%
+  filter(!(age_group == "None")) %>%
   pivot_longer(cols = c("2020", "2021"), names_to = "year", values_to = "value")
 
-# Combining the data
-table3_age_24_long <- rbind(table3_age_24_long, age_35_44)
 
-ggplot(table3_age_24_long, aes(x = perceived_race, y = value, fill = factor(year))) +
-  geom_bar(stat = "identity", position = 'dodge') +
-  facet_wrap(~ age_group, scales = "free_y") +
-  labs(title = "Bar Chart for the number of arrests by Age-Group for the year 2020, and 2021",
-       x = "Perceived Race",
+# Create a line Graph
+ggplot(table3_ii, aes(x = age_group, y = value, color = perceived_race)) +
+  geom_point() + 
+  geom_smooth(method = "loess", se = FALSE) +
+  facet_wrap(~ year, scales = "free_y") +
+  labs(title = "Scatter Plot for the number of arrests by Age-Group for the year 2021",
+       x = "Age Group",
        y = "Value",
-       fill = "Age Group") +
+       color = "Perceived Race") +  # Change fill to color
   theme_minimal() +
-  theme(legend.position = "right") + 
+  theme(legend.position = "right") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
+
 ```
-
-
-
-
 ## Discussion
+
+
 ## References
 
 
