@@ -1,6 +1,7 @@
 ---
-title: "Police Arrests and Ethnic Background"
+title: "No Evidence of Bias in Arrests Made by the Toronto Police Service"
 author: "Aviral Bhardwaj"
+abstract: The ethnic identity of citizens arrested by the police has consistently been a topic of discussion, often highlighting the pronounced skewness of certain ethnic identities. This paper seeks to analyze data from the Toronto Open Data Portal to investigate whether there is any bias in arrests made by the Toronto Police Service between 2020 and 2021, while accounting for factors such as age, booked after arrest, and search on arrest. While the population distribution of various ethnic identities varies significantly, it was found that ..... Further analysis can provide valuable insights for policymakers, law enforcement agencies, and community advocates in fostering a more equitable society while emphasizing the importance of promoting transparency and accountability in policing.
 date: today
 date-format: long
 number-sections: true
@@ -33,6 +34,7 @@ library(dplyr)
 library(ggplot2)
 library(janitor)
 library(patchwork)
+library(kableExtra)
 ```
 
 ```{r}
@@ -68,12 +70,15 @@ This data is sourced from the Toronto Open Data Portal `opendatatoronto` [@rOpen
 
 The data underwent cleaning and analysis using the R programming language [@r]. Cleaning was performed with the `tidyverse` package [@rTidyverse], involving the removal of unnecessary columns for the analysis. Subsequently, analysis was conducted utilizing the `dplyr` package [@rDplyr], with the data grouped by ethnic and identity-based categories. Visualization was then executed using the `ggplot2` package [@rGgplot2], depicting the number of arrests and strip searches across various ethnic and identity-based groups.
 
-The raw data included 32,000 arrests data with 26 variables of analyzable data, that included variables such as Arrest year, Arrest_Month, Perceived Race, Age Group, Youth at Arrest and Booked which we will be using for the paper.
+The raw dataset comprised 32,000 arrest records spanning both 2020 and 2021, encompassing 26 variables of analyzable data. However, for the analysis in this paper, we narrowed our focus to specific variables, including Arrest Year, Perceived Race, Age Group, Youth at Arrest, Booked, Search Reason Cause Injury, Search Reason Assist Escape, Search Reason Possess Weapons, and Search Reason Possess Evidence. Upon further examination the raw data contained values such as 'NA' under the Booked column and 'None' under the Search column. Using the `mutate` function [@rDplyr], we replaced the 'NA' and `None` values with 0 and 1 to summarize the data. Additionally, we consolidated similar columns, namely Search Reason Cause Injury, Search Reason Assist Escape, Search Reason Possess Weapons, and Search Reason Possess Evidence, into a unified column labeled "Search Reason." The process involved utilizing the `any()` function [@rDplyr], assigning a value of 1 to indicate the presence of any of these search motives.
 
 ```{r}
 #| warning: false
 #| message: false
 #| include: false
+
+# Reading the data
+data <- read.csv("../data/raw_data.csv")
 
 # Adjusting and cleaning the name of the variable
 cleaned_data <- data %>% 
@@ -142,40 +147,21 @@ write.csv(cleaned_data, "../data/cleaned_data.csv")
 # List of the age groups that are in the data
 # age_groups <- cleaned_data |> select(age_group) |> unique()
 
-write.csv(cleaned_data, "../data/cleaned_data.csv")
+# write.csv(cleaned_data, "../data/cleaned_data.csv")
 ```
 
 
-```{r}
-cleaned_data <- read.csv("../data/cleaned_data.csv")
+### Arrests by Ethnic and Identity-Based Groups for Year 2020 and 2021
 
-table <- cleaned_data |>
-  group_by(arrest_year, perceived_race, search_reason) %>%
-  summarise(n = n(), .groups = "drop") %>%
-  arrange(desc(perceived_race)) %>%
-  pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0)
-
-table <- pivot_longer(table, cols = c("2020", "2021"), names_to = "year", values_to = "value")
-
-ggplot(table, aes(x = perceived_race, y = value, fill = factor(search_reason))) +
-  geom_bar(stat = "identity", position = "fill") +
-  facet_wrap(~ year, scales = "free_y") +
-  labs(title = "Percent Stacked Bar Chart Based on 'booked'",
-       x = "Perceived Race",
-       y = "Percentage",
-       fill = "Search Reason") +
-  theme_minimal() +
-  scale_fill_discrete(labels = c("Not Searched", "Searched")) +
-  theme(legend.position = "right") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-```
+Table 1 (@tbl-table1) provides a summary of our data, revealing the number of individuals arrested from each prominent ethnic group in the years 2020 and 2021. 
 
 ```{r}
 #| warning: false
 #| message: false
 #| echo: false
-# Generate a table of the data with the number of arrests and strip searches by ethinic and identity based groups for the year 2020, and 2021
+#| label: tbl-table1
+#| tbl-cap: "Arrests by ethnic background for the year 2020, and 2021"
+## Table 1: Total Number of Arrests
 cleaned_data <- read.csv("../data/cleaned_data.csv")
 
 table1 <- cleaned_data |> 
@@ -186,18 +172,26 @@ table1 <- cleaned_data |>
 
 
 kable(table1,
-      caption = "Number of arrests by ethinic background for the year 2020, and 2021",
       align = "c",
+      linesep = "",
       col.names = c("Ethinic and Identity Based Groups", "2020", "2021"),
       booktabs = TRUE)
-
-table1_long <- pivot_longer(table1, cols = c("2020", "2021"), names_to = "year", values_to = "value")
 ```
+
+
+### Booked after Arrest (Ethnic and Identity-Based Groups for Year 2020 and 2021)
+
+Table 2 presents a data summary indicating the count of individuals from prominent ethnic groups who were "booked" in criminal cases post-arrest in the years 2020 and 2021. Due to the extensive nature of the dataset, encompassing nine different age groups across eight ethnicities, summarizing the information for clarity posed a challenge. Consequently, we have opted to showcase a subset of the data specifically focusing on the age group of 25 to 34 years for improved readability.
 
 ```{r}
 #| warning: false
 #| message: false
 #| echo: false
+#| tbl-cap: "Arrests Booked by ethnic background for the year 2020, and 2021"
+
+## Table 2: Booked After Arrest
+cleaned_data <- read.csv("../data/cleaned_data.csv")
+
 table2 <- cleaned_data |>
   filter(booked == 1) |>
   group_by(arrest_year, perceived_race) |>
@@ -205,115 +199,189 @@ table2 <- cleaned_data |>
   arrange(desc(n)) |>
   pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0)
 
-
 kable(table2,
-      caption = "Arrests Booked by ethnic background for the year 2020, and 2021",
       align = "c",
+      linesep = "",
       col.names = c("Ethinic and Identity Based Groups", "2020", "2021"),
       booktabs = TRUE)
-
-table2_long <- pivot_longer(table2, cols = c("2020", "2021"), names_to = "year", values_to = "value")
 ```
+
+
+
+### Total number of arrests by age group for the year 2020 and 2021
+
+Table 3 presents a data summary indicating the count of different age groups of individuals from prominent ethnic groups in the years 2020 and 2021. Due to the extensive nature of the dataset, encompassing nine different age groups across eight ethnicities, summarizing the information for clarity posed a challenge. Consequently, we have opted to showcase a subset of the data specifically focusing on the age group of 25 to 34 years for improved readability.
 
 ```{r}
 #| warning: false
 #| message: false
 #| echo: false
+
+## Table 3: Arrests by Age Group
+
 cleaned_data <- read.csv("../data/cleaned_data.csv")
-
-cleaned_data <- cleaned_data |>
-  select(
-    arrest_year,
-    perceived_race,
-    booked
-  )
-
-# Group 
-cleaned_data <- cleaned_data %>%
-  group_by(arrest_year, perceived_race, booked) %>%
-  summarise(n = n(), .groups = "drop") %>%
-  arrange(desc(perceived_race)) %>%
-  pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0)
-
-cleaned_data <- pivot_longer(cleaned_data, cols = c("2020", "2021"), names_to = "year", values_to = "value")
-```
-
-```{r police_arrests, fig.cap = "Number of arrests by ethinic background for the year 2020, and 2021", fig.width=10, fig.height=6, fig.align='center'}
-ggplot(cleaned_data, aes(x = perceived_race, y = value, fill = factor(booked))) +
-  geom_bar(stat = "identity") +
-  facet_wrap(~ year, scales = "free_y") +
-  labs(title = "Stacked Bar Chart Based on 'booked'",
-       x = "Perceived Race",
-       y = "Value",
-       fill = "Booked") +
-  theme_minimal() +
-  scale_fill_discrete(labels = c("Not Booked", "Booked")) +
-  theme(legend.position = "right") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-```
-
-```{r}
-#| warning: false
-#| message: false
-#| echo: false
-cleaned_data <- read.csv("../data/cleaned_data.csv")
-cleaned_data <- cleaned_data |>
-  select(
-    arrest_year,
-    perceived_race,
-    age_group
-  )
-
-# Group 
-cleaned_data <- cleaned_data %>%
+# 
+# # Group 
+table3 <- cleaned_data %>%
   group_by(arrest_year, perceived_race, age_group) %>%
   summarise(n = n(), .groups = "drop") %>%
   arrange(desc(perceived_race)) %>%
   pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0)
 
+table3_small <- cleaned_data %>%
+  filter(age_group == "Aged 25 to 34 years") |>
+  group_by(arrest_year, perceived_race, age_group) %>%
+  summarise(n = n(), .groups = "drop") |>
+  arrange(desc(n)) |>
+  pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0)
 
-cleaned_data <- pivot_longer(cleaned_data, cols = c("2020", "2021"), names_to = "year"  ,values_to = "value")
+kable(table3_small,
+      caption = "Arrests Booked by ethnic background for the year 2020, and 2021",
+      align = "c",
+      linesep = "",
+      col.names = c("Ethinic and Identity Based Groups", "Age Group", "2020", "2021"),
+      booktabs = TRUE)
+
 ```
 
-```{r fig2, fig.cap = "Number of arrests by ethinic background for the year 2020, and 2021", fig.width=10, fig.height=6, fig.align='center'}
+We would like to acknowledge that opendatatoronto [@rOpenDataToronto] provides the distribution of the population by ethnicity. However, due to the vast size of Toronto and its numerous wards, it has been challenging to compare all the data and cross-verify it with our crime rate data comprehensively. Nevertheless, a more detailed analysis can be conducted by comparing specific ethnic groups with each other.
+
+
+## Results
+Now that we have cleaned the data, we can begin to analyze the data. The following section will provide a summary of the data, and the trends that emerge from the data. Figure 1, Figure 2, Figure 3, Figure 4 was created using `ggplot` [@rGgplot2], displays the information that can be used as compare the trends as described above.
+
+### Number of Arrests in year 2020-2021
+With reference to Table 1 and the graph plotted the data shows a non-uniform distribution of arrests across ethnic groups, with the Black ethnic group and White group exhibiting the highest numbers of arrests in both 2020 and 2021. Furthermore, the data indicates a decrease in the number of arrests for the top two ethnic groups from 2020 to 2021. However, a contrasting trend emerges for other ethnic groups, where the number of arrests has increased over the same time period. 
+
+```{r}
 #| warning: false
 #| message: false
 #| echo: false
 #| eval: true
-# Dot Plot
-ggplot(cleaned_data, aes(x = perceived_race, y = value, fill = factor(age_group))) +
-  geom_dotplot(binaxis = "y", stackdir = "center", dotsize = 0.7, binwidth = 80) +
-  facet_wrap(~ year, scales = "free_y") +
-  labs(title = "Stacked Bar Chart Based on 'booked'",
-       x = "Perceived Race",
-       y = "Value",
-       fill = "Booked") +
+#| fig.cap: "Number of arrests by ethinic background for the year 2020, and 2021"
+#| fig.width: 10
+#| fig.height: 6
+#| fig.align: 'center'
+#| fig.pos: 'htb'
+
+table1_long <- pivot_longer(table1, cols = c("2020", "2021"), names_to = "year", values_to = "value")
+
+# Create a plot
+ggplot(table1_long, aes(x = perceived_race, y = value, fill = year)) +
+  geom_bar(stat = "identity", position = 'dodge') +
+  labs(title = "Bar Chart for the number of arrests by ethinic background for the year 2020, and 2021",
+       x = "Ethnic and Identity Based Groups",
+       y = "Number of Arrests",
+       fill = "Year") +
   theme_minimal() +
-  theme(legend.position = "bottom") + 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
+  scale_fill_discrete(labels = c("2020", "2021")) +
+  theme(legend.position = "right") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
+  scale_fill_brewer(palette = "Set1")
 ```
 
-```{r fig3, fig.cap = "Number of arrests by ethinic background for the year 2020, and 2021", fig.width=10, fig.height=6, fig.align='center'}
+### Number of Arrests Booked in year 2020-2021
+Referring to Table 2 and the plotted graph, the data illustrates a consistent distribution of the number of individuals booked after arrests across various ethnic groups. Notably, there is a higher count of individuals booked after arrest compared to those who were arrested but not booked for a criminal case. Additionally, it is observed that, across all ethnic groups, the percentage of individuals booked falls within the range of 50% to 55%, and this pattern remains consistent in the year 2021.
+
+However, it is noteworthy that the Black ethnicity exhibits the highest number of individuals booked after arrest in both the years 2020 and 2021.
+
+```{r}
 #| warning: false
 #| message: false
 #| echo: false
 #| eval: true
+#| fig.cap: "Number of arrests booked by ethinic background for the year 2020, and 2021"
+#| fig.width: 10
+#| fig.height: 6
+#| fig.align: 'center'
+#| fig.pos: 'htb'
+
+table2_long <-
+  cleaned_data |>
+  select(
+    arrest_year,
+    perceived_race,
+    booked
+  ) |>
+  group_by(arrest_year, perceived_race, booked) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  arrange(desc(perceived_race)) %>%
+  pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0)
+
+table2_long <- pivot_longer(table2_long, cols = c("2020", "2021"), names_to = "year", values_to = "value")
+
+ggplot(table2_long, aes(x = perceived_race, y = value, fill = factor(booked))) +
+  geom_bar(stat = "identity", position = "fill") +
+  facet_wrap(~ year, scales = "free_y") +
+  labs(title = "Booked after Arrest in the year 2020 and 2021",
+       x = "Perceived Race",
+       y = "Percentage of Arrests Booked",
+       fill = "Status") +
+  theme_minimal() +
+  theme(legend.position = "right") + 
+  scale_fill_discrete(labels = c("Not Booked", "Booked")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+### Number of Arrests by Age Group for the year 2020-2021
+As seen in Figure 3, the data indicates a non-uniform distribution of arrests across age groups, with the age group of 25 to 34 years and age group 35 to 44 exhibiting the highest number of arrests in both 2020 and 2021. Furthermore, the data indicates a decrease in the number of arrests for the top two age groups from 2020 to 2021. However, a contrasting trend emerges for other age groups, where the number of arrests has increased over the same time period.
+
+```{r}
+#| warning: false
+#| message: false
+#| echo: false
+#| eval: true
+#| fig.cap: "Number of arrests by Age-Group for the year 2020, and 2021"
+#| fig.width: 10
+#| fig.height: 6
+#| fig.align: 'center'
+#| fig.pos: 'htb'
 # Bar plot
-ggplot(cleaned_data, aes(x = perceived_race, y = value, fill = factor(age_group))) +
+
+table3_long <- pivot_longer(table3, cols = c("2020", "2021"), names_to = "year", values_to = "value")
+
+ggplot(table3_long, aes(x = perceived_race, y = value, fill = factor(age_group))) +
   geom_bar(stat = "identity") +
   facet_wrap(~ year, scales = "free_y") +
-  labs(title = "Stacked Bar Chart Based on 'booked'",
+  labs(title = "Bar Chart for the number of arrests by Age-Group for the year 2020, and 2021",
        x = "Perceived Race",
        y = "Value",
-       fill = "Booked") +
+       fill = "Year") +
+  theme_minimal() +
+  theme(legend.position = "right") + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+table3_age_24_long <- pivot_longer(table3_small, cols = c("2020", "2021"), names_to = "year", values_to = "value")
+
+age_35_44 <- cleaned_data %>%
+  filter(age_group == "Aged 35 to 44 years") |>
+  group_by(arrest_year, perceived_race, age_group) %>%
+  summarise(n = n(), .groups = "drop") |>
+  arrange(desc(n)) |>
+  pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0) |>
+  pivot_longer(cols = c("2020", "2021"), names_to = "year", values_to = "value")
+
+# Combining the data
+table3_age_24_long <- rbind(table3_age_24_long, age_35_44)
+
+ggplot(table3_age_24_long, aes(x = perceived_race, y = value, fill = factor(year))) +
+  geom_bar(stat = "identity", position = 'dodge') +
+  facet_wrap(~ age_group, scales = "free_y") +
+  labs(title = "Bar Chart for the number of arrests by Age-Group for the year 2020, and 2021",
+       x = "Perceived Race",
+       y = "Value",
+       fill = "Age Group") +
   theme_minimal() +
   theme(legend.position = "right") + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
 
+
+
+
+## Discussion
 ## References
 
 
