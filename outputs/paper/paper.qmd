@@ -64,7 +64,11 @@ write.csv(data, "../data/raw_data.csv")
 
 
 ## Introduction
+In the vibrant metropolis of Toronto, the intersection between law enforcement practices and demographic characteristics holds profound implications for community dynamics and public policy. This paper undertakes a comprehensive analysis of arrest data spanning the years 2020 and 2021, seeking to unravel the intricate patterns that shape the city's legal landscape.
 
+Arrest data serves as a vital lens through which we can gain insights into the dynamics of law enforcement activities and their correlation with ethnicity and age. Our inquiry begins with a broad exploration of the distribution of arrests across various age groups, aiming to discern overarching trends and fluctuations. The age spectrum, a fundamental dimension of this analysis, reveals intriguing patterns that underscore the nuanced nature of arrests in Toronto.
+
+As we embark on this exploration, the data prompts critical questions about the socio-cultural, economic, and systemic factors that contribute to these observed patterns. This paper aims to contribute to a nuanced understanding of the dynamics of arrests in Toronto, providing insights that can inform targeted interventions, policy considerations, and community engagement efforts.
 
 ## Data 
 This data is sourced from the Toronto Open Data Portal `opendatatoronto` [@rOpenDataToronto]. The following data is utilized for a more in-depth analysis of arrests and strip searches involving various ethnic and identity-based groups in Toronto. The information is gathered by the Toronto Police Service (TPS) and is collected under the authority of the Police Services Act. Its purpose is to enhance comprehension of the relationship between the police and the community. The data covers the period from 2020 to 2021.
