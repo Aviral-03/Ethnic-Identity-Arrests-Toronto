@@ -1,8 +1,8 @@
-# Starter folder
+# Exploring Ethnic and Race Based Arrests by Toronto Police
 
 ## Overview
 
-This repo provides students with a foundation for their own projects associated with *Telling Stories with Data*. You do not need every aspect for every paper and you should delete aspects that you do not need.
+This paper seeks to analyze data from the Toronto Open Data Portal to investigate whether there is any bias in arrests made by the Toronto Police Service between 2020 and 2021, while accounting for factors such as age, booked after arrest, and search on arrest.
 
 To use this folder, click the green "Code" button", then "Download ZIP". Move the downloaded folder to where you want to work on your own computer, and then modify it to suit.
 
