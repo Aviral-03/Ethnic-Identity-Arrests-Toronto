@@ -13,7 +13,7 @@ library(tidyverse)
 
 
 #### Test data ####
-police_arrest_data <- read.csv("../data/cleaned_data.csv")
+police_arrest_data <- read.csv("../outputs/data/cleaned_data.csv")
 
 # Test Check year is numeric 
 police_arrest_data$arrest_year == as.numeric(police_arrest_data$arrest_year)

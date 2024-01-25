@@ -64,9 +64,8 @@ datastore_resources <- filter(resources, tolower(format) %in% c('csv', 'geojson'
 data <- filter(datastore_resources, row_number()==1) %>% get_resource()
 
 # Save the data in CSV
-write.csv(data, "../data/raw_data.csv")
+write.csv(data, "../../inputs/data/raw_data.csv")
 ```
-
 
 ## Introduction
 In the vibrant metropolis of Toronto, the intersection between law enforcement practices and demographic characteristics holds profound implications for community dynamics and public policy. Toronto, named Canada's most diverse city, encounters numerous challenges arising from the coexistence of ethnically diverse populations within the same neighborhoods. According to an article published by Georgetown University, the "ongoing debate surrounding police reforms is heavily influenced by historical connections with slavery and contemporary racial disparities" (@rJackson2022). This statement underscores the contentious nature of whether the race identity affiliation of police officers affects their policing practices, despite the expectation for fair and unbiased treatment.
@@ -88,7 +87,7 @@ The raw dataset comprised 32,000 arrest records spanning both 2020 and 2021, enc
 #| include: false
 
 # Reading the data
-data <- read.csv("../data/raw_data.csv")
+data <- read.csv("../../inputs/data/raw_data.csv")
 
 # Adjusting and cleaning the name of the variable
 cleaned_data <- data %>% 

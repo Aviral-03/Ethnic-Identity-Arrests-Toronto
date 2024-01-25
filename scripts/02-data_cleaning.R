@@ -12,7 +12,7 @@ library(tidyverse)
 
 #### Clean data ####
 # Reading the data
-data <- read.csv("../data/raw_data.csv")
+data <- read.csv("../inputs/data/raw_data.csv")
 
 # Adjusting and cleaning the name of the variable
 cleaned_data <- data %>% 
@@ -60,4 +60,4 @@ cleaned_data <- cleaned_data |>
   select(
     arrest_year, perceived_race, age_group, youth_at_arrest_under_18_years, booked, search_reason)
 
-write.csv(cleaned_data, "../data/cleaned_data.csv")
+write.csv("../outputs/data/cleaned_data.csv")
