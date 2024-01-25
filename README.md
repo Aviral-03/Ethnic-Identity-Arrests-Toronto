@@ -6,6 +6,11 @@ This paper seeks to analyze data from the Toronto Open Data Portal to investigat
 
 To use this folder, click the green "Code" button", then "Download ZIP". Move the downloaded folder to where you want to work on your own computer, and then modify it to suit.
 
+## LLM Usage
+
+ChatGPT3.5 was used as an LLM for this project. Debugging, formating, and commenting was done using LLM.
+All chat history for the LLM usage can be found in the `inputs/llm/usage.txt` folder
+
 ## File Structure
 
 The repo is structured as:
