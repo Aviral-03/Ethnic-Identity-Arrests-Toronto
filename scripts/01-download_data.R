@@ -28,6 +28,6 @@ datastore_resources <- filter(resources, tolower(format) %in% c('csv', 'geojson'
 data <- filter(datastore_resources, row_number()==1) %>% get_resource()
 
 # Save the data in CSV
-write.csv(data, "../data/raw_data.csv")
+write.csv("../inputs/data/raw_data.csv")
 
          
