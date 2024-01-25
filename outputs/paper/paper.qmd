@@ -21,6 +21,8 @@ bibliography: references.bib
 #install.packages("opendatatoronto")
 # install.packages("kableExtra")
 # install.packages("patchwork")
+# install.packages("janitor")
+# install.packages("gridExtra")
 ```
 
 ```{r}
@@ -37,7 +39,9 @@ library(ggplot2)
 library(janitor)
 library(patchwork)
 library(kableExtra)
+library(gridExtra)
 ```
+
 
 ```{r}
 #| warning: false
@@ -65,18 +69,18 @@ write.csv(data, "../data/raw_data.csv")
 
 
 ## Introduction
-In the vibrant metropolis of Toronto, the intersection between law enforcement practices and demographic characteristics holds profound implications for community dynamics and public policy. This paper undertakes a comprehensive analysis of arrest data spanning the years 2020 and 2021, seeking to unravel the intricate patterns that shape the city's legal landscape.
+In the vibrant metropolis of Toronto, the intersection between law enforcement practices and demographic characteristics holds profound implications for community dynamics and public policy. Toronto, named Canada's most diverse city, encounters numerous challenges arising from the coexistence of ethnically diverse populations within the same neighborhoods. According to an article published by Georgetown University, the "ongoing debate surrounding police reforms is heavily influenced by historical connections with slavery and contemporary racial disparities" (@rJackson2022). This statement underscores the contentious nature of whether the race identity affiliation of police officers affects their policing practices, despite the expectation for fair and unbiased treatment.
 
-Arrest data serves as a vital lens through which we can gain insights into the dynamics of law enforcement activities and their correlation with ethnicity and age. Our inquiry begins with a broad exploration of the distribution of arrests across various age groups, aiming to discern overarching trends and fluctuations. The age spectrum, a fundamental dimension of this analysis, reveals intriguing patterns that underscore the nuanced nature of arrests in Toronto.
+In a recent article published by the Toronto Police Services, it is highlighted that "Black, East/Southeast Asian, Middle Eastern, and Latino people were over-represented in reported use of force incidents compared to their presence in the enforcement action population" (@Fanfair2022). This indicates that, despite Toronto Police Services working towards a more equitable society, there are still hints of racial bias in the arrests made by the Toronto Police Services.Conversely this paper undertakes a comprehensive analysis of arrest data of various race and ethinic iden spanning the years 2020 and 2021 in the city of Toronto, seeking to unravel the intricate patterns that shape the city's legal landscape. 
 
-As we embark on this exploration, the data prompts critical questions about the socio-cultural, economic, and systemic factors that contribute to these observed patterns. This paper aims to contribute to a nuanced understanding of the dynamics of arrests in Toronto, providing insights that can inform targeted interventions, policy considerations, and community engagement efforts.
+Arrest data serves as a vital lens through which we can gain insights into the dynamics of law enforcement activities and their correlation with ethnicity and age. In the data section we clean and process our data. Following which in our discussion and results our inquiry begins with a broad exploration of the distribution of arrests across various age groups, aiming to discern overarching trends and fluctuations. The age spectrum, a fundamental dimension of this analysis, reveals intriguing patterns that underscore the nuanced nature of arrests in Toronto. This paper aims to contribute to understanding the dynamics of arrests in Toronto, providing insights that can inform targeted interventions, policy considerations, and community engagement efforts.
 
 ## Data 
 This data is sourced from the Toronto Open Data Portal `opendatatoronto` [@rOpenDataToronto]. The following data is utilized for a more in-depth analysis of arrests and strip searches involving various ethnic and identity-based groups in Toronto. The information is gathered by the Toronto Police Service (TPS) and is collected under the authority of the Police Services Act. Its purpose is to enhance comprehension of the relationship between the police and the community. The data covers the period from 2020 to 2021.
 
 The data underwent cleaning and analysis using the R programming language [@r]. Cleaning was performed with the `tidyverse` package [@rTidyverse], involving the removal of unnecessary columns for the analysis. Subsequently, analysis was conducted utilizing the `dplyr` package [@rDplyr], with the data grouped by ethnic and identity-based categories. Visualization was then executed using the `ggplot2` package [@rGgplot2], depicting the number of arrests and strip searches across various ethnic and identity-based groups.
 
-The raw dataset comprised 32,000 arrest records spanning both 2020 and 2021, encompassing 26 variables of analyzable data. However, for the analysis in this paper, we narrowed our focus to specific variables, including Arrest Year, Perceived Race, Age Group, Youth at Arrest, Booked, Search Reason Cause Injury, Search Reason Assist Escape, Search Reason Possess Weapons, and Search Reason Possess Evidence. Upon further examination the raw data contained values such as 'NA' under the Booked column and 'None' under the Search column. Using the `mutate` function [@rDplyr], we replaced the 'NA' and `None` values with 0 and 1 to summarize the data. Additionally, we consolidated similar columns, namely Search Reason Cause Injury, Search Reason Assist Escape, Search Reason Possess Weapons, and Search Reason Possess Evidence, into a unified column labeled "Search Reason." The process involved utilizing the `any()` function [@rDplyr], assigning a value of 1 to indicate the presence of any of these search motives.
+The raw dataset comprised 32,000 arrest records spanning both 2020 and 2021, encompassing 26 variables of analyzable data. However, for the analysis in this paper, we narrowed our focus to specific variables, including Arrest Year, Perceived Race, Age Group, Youth at Arrest, Booked, Search Reason Cause Injury, Search Reason Assist Escape, Search Reason Possess Weapons, and Search Reason Possess Evidence. Additionally, we consolidated similar columns, namely Search Reason Cause Injury, Search Reason Assist Escape, Search Reason Possess Weapons, and Search Reason Possess Evidence, into a unified column labeled "Search Reason." utilizing the `any()` function [@rDplyr].
 
 ```{r}
 #| warning: false
@@ -159,69 +163,55 @@ write.csv(cleaned_data, "../data/cleaned_data.csv")
 
 ### Arrests by Ethnic and Identity-Based Groups for Year 2020 and 2021
 
-Table 1 (@tbl-table1) provides a summary of our data, revealing the number of individuals arrested from each prominent ethnic group in the years 2020 and 2021. 
+Since our analysis primarily revolves around the distribution of arrests for each ethnic identity, we extracted all ethnic identities from our data. These ethnic identities include Black, White, South Asian, East Asian, Middle Eastern, Latin American, Southeast Asian, and Indigenous. The data for the years 2020 and 2021 are summarized in Table 1 (a) (@tbl-table1) and Table 1 (b), respectively.
+
+Table 1 (a) (@tbl-table1) provides a summary of our data, revealing the number of individuals arrested from each prominent ethnic group in the years 2020 and 2021. Table 2 (b) shows, out of all the people arrested from each ethnic identity, how many were actually booked under a criminal case.
+
 
 ```{r}
 #| warning: false
 #| message: false
 #| echo: false
 #| label: tbl-table1
-#| tbl-cap: "Arrests by ethnic background for the year 2020, and 2021"
+#| tbl-cap: "Total number of arrests vs Booked for the year 2020, and 2021"
 ## Table 1: Total Number of Arrests
 cleaned_data <- read.csv("../data/cleaned_data.csv")
 
 table1 <- cleaned_data |> 
+  filter(!perceived_race == "None") |>
   group_by(arrest_year, perceived_race) |> 
   summarise(n = n(), .groups = "drop") |> 
   arrange(desc(n)) |> 
   pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0)
 
-
-kable(table1,
-      align = "c",
-      linesep = "",
-      col.names = c("Ethinic and Identity Based Groups", "2020", "2021"),
-      booktabs = TRUE)
-```
-
-
-### Booked after Arrest (Ethnic and Identity-Based Groups for Year 2020 and 2021)
-
-Table 2 presents a data summary indicating the count of individuals from prominent ethnic groups who were "booked" in criminal cases post-arrest in the years 2020 and 2021. Due to the extensive nature of the dataset, encompassing nine different age groups across eight ethnicities, summarizing the information for clarity posed a challenge. Consequently, we have opted to showcase a subset of the data specifically focusing on the age group of 25 to 34 years for improved readability.
-
-```{r}
-#| warning: false
-#| message: false
-#| echo: false
-#| tbl-cap: "Arrests Booked by ethnic background for the year 2020, and 2021"
-
-## Table 2: Booked After Arrest
-cleaned_data <- read.csv("../data/cleaned_data.csv")
-
 table2 <- cleaned_data |>
   filter(booked == 1) |>
+  filter(!perceived_race == "None") |>
   group_by(arrest_year, perceived_race) |>
   summarise(n = n(), .groups = "drop") |>
   arrange(desc(n)) |>
   pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0)
 
-kable(table2,
-      align = "c",
-      linesep = "",
-      col.names = c("Ethinic and Identity Based Groups", "2020", "2021"),
-      booktabs = TRUE)
+knitr::kable(
+  list(table1, table2),
+  col.names = c("Ethinic Identity", "2020", "2021"),
+  booktabs = TRUE,
+  )
+
 ```
-
-
 
 ### Total number of arrests by age group for the year 2020 and 2021
 
-Table 3 presents a data summary indicating the count of different age groups of individuals from prominent ethnic groups in the years 2020 and 2021. Due to the extensive nature of the dataset, encompassing nine different age groups across eight ethnicities, summarizing the information for clarity posed a challenge. Consequently, we have opted to showcase a subset of the data specifically focusing on the age group of 25 to 34 years for improved readability.
+It would be interesting to explore the age group distribution of arrests. Table 2 (@tbl-table2) exactly presents that. A data summary indicating the count of different age groups of individuals from prominent ethnic groups in the years 2020 and 2021. All the age groups were the following: Ager 17 years and under, Aged 18 to 24 years, Aged 25 to 34 years, Aged 35 to 44 years, Aged 45 to 54 years, Aged 55 to 64 years, Aged 65 years and over.
+
+Due to the extensive nature of the dataset, encompassing nine different age groups across eight ethnicities, summarizing the information for clarity posed a challenge. Consequently, we have opted to showcase a subset of the data specifically focusing on the age group of 25 to 34 years for improved readability. 
 
 ```{r}
 #| warning: false
 #| message: false
 #| echo: false
+#| label: tbl-table2
+#| tbl-cap: "Arrests Booked by ethinic background for the year 2020, and 2021"
 
 ## Table 3: Arrests by Age Group
 
@@ -229,6 +219,7 @@ cleaned_data <- read.csv("../data/cleaned_data.csv")
 # 
 # # Group 
 table3 <- cleaned_data %>%
+  filter(!(age_group == "None") & !(perceived_race == "None")) |>
   group_by(arrest_year, perceived_race, age_group) %>%
   summarise(n = n(), .groups = "drop") %>%
   arrange(desc(perceived_race)) %>%
@@ -242,7 +233,6 @@ table3_small <- cleaned_data %>%
   pivot_wider(names_from = arrest_year, values_from = n, values_fill = 0)
 
 kable(table3_small,
-      caption = "Arrests Booked by ethnic background for the year 2020, and 2021",
       align = "c",
       linesep = "",
       col.names = c("Ethinic and Identity Based Groups", "Age Group", "2020", "2021"),
@@ -250,14 +240,13 @@ kable(table3_small,
 
 ```
 
+## Results
 We would like to acknowledge that opendatatoronto [@rOpenDataToronto] provides the distribution of the population by ethnicity. However, due to the vast size of Toronto and its numerous wards, it has been challenging to compare all the data and cross-verify it with our crime rate data comprehensively. Nevertheless, a more detailed analysis can be conducted by comparing specific ethnic groups with each other.
 
-
-## Results
-Now that we have cleaned the data, we can begin to analyze the data. The following section will provide a summary of the data, and the trends that emerge from the data. Figure 1, Figure 2, Figure 3, Figure 4 was created using `ggplot` [@rGgplot2], displays the information that can be used as compare the trends as described above.
+Now that we have cleaned the data, we can begin to analyze the data. The following section will provide a summary of the data, and the trends that emerge from the data. Figure 1 (@fig-fig1), Figure 2 (@fig-fig2), Figure 3 (@fig-fig3), and Figure 4 (@fig-fig4) was created using `ggplot` [@rGgplot2], displays the information that can be used as compare the trends as described above.
 
 ### Number of Arrests in year 2020-2021
-With reference to Table 1 and the graph plotted the data shows a non-uniform distribution of arrests across ethnic groups, with the Black ethnic group and White group exhibiting the highest numbers of arrests in both 2020 and 2021. Furthermore, the data indicates a decrease in the number of arrests for the top two ethnic groups from 2020 to 2021. However, a contrasting trend emerges for other ethnic groups, where the number of arrests has increased over the same time period. 
+With reference to Table 1 (@tbl-table1) and the graph (see @fig-fig1) plotted the data shows a non-uniform distribution of arrests across ethnic groups, with the Black ethnic group and White group exhibiting the highest numbers of arrests in both 2020 and 2021. Furthermore, the data indicates a decrease in the number of arrests for the top two ethnic groups from 2020 to 2021. However, a contrasting trend emerges for other ethnic groups, where the number of arrests has increased over the same time period. 
 
 ```{r}
 #| warning: false
@@ -269,6 +258,7 @@ With reference to Table 1 and the graph plotted the data shows a non-uniform dis
 #| fig.height: 6
 #| fig.align: 'center'
 #| fig.pos: 'htb'
+#| label: fig-fig1
 
 table1_long <- pivot_longer(table1, cols = c("2020", "2021"), names_to = "year", values_to = "value")
 
@@ -286,8 +276,7 @@ ggplot(table1_long, aes(x = perceived_race, y = value, fill = year)) +
   scale_fill_brewer(palette = "Set1")
 ```
 
-### Number of Arrests Booked in year 2020-2021
-Referring to Table 2 and the plotted graph, the data illustrates a consistent distribution of the number of individuals booked after arrests across various ethnic groups. Notably, there is a higher count of individuals booked after arrest compared to those who were arrested but not booked for a criminal case. Additionally, it is observed that, across all ethnic groups, the percentage of individuals booked falls within the range of 50% to 55%, and this pattern remains consistent in the year 2021.
+Referring to Table 1 (@tbl-table1) for the proportion of arrests that were booked, we plotted a stacked bar graph (see @fig-fig2), with y-axis representing the total percentage. The data illustrates a consistent distribution of the number of individuals booked after arrests across various ethnic groups. Notably, there is a higher count of individuals booked after arrest compared to those who were arrested but not booked for a criminal case. Additionally, it is observed that, across all ethnic groups, the percentage of individuals booked falls within the range of 50% to 55%, and this pattern remains consistent in the year 2021.
 
 However, it is noteworthy that the Black ethnicity exhibits the highest number of individuals booked after arrest in both the years 2020 and 2021.
 
@@ -301,6 +290,7 @@ However, it is noteworthy that the Black ethnicity exhibits the highest number o
 #| fig.height: 6
 #| fig.align: 'center'
 #| fig.pos: 'htb'
+#| label: fig-fig2
 
 table2_long <-
   cleaned_data |>
@@ -332,9 +322,8 @@ ggplot(table2_long, aes(x = perceived_race, y = value, fill = factor(booked))) +
 
 
 ### Number of Arrests by Age Group for the year 2020-2021
-As depicted in Figure 3, the data reveals a non-uniform distribution of arrests across age groups, with the age groups of 25 to 34 years and 35 to 44 years exhibiting the highest number of arrests in both 2020 and 2021. Furthermore, there is a notable decrease in the number of arrests for these top two age groups from 2020 to 2021. In contrast, a different trend emerges for other age groups, where the number of arrests has increased over the same time period.
+As depicted in Figure 3 (see @fig-fig3), the data reveals a non-uniform distribution of arrests across age groups, with the age groups of 25 to 34 years and 35 to 44 years exhibiting the highest number of arrests in both 2020 and 2021. Furthermore, there is a notable decrease in the number of arrests for these top two age groups from 2020 to 2021. In contrast, a different trend emerges for other age groups, where the number of arrests has increased over the same time period.
 
-Examining Figure 4, which illustrates the dot plot for the number of arrests by age group in the year 2020 and 2021 for the top two ethnic groups, "Black" and "White," it becomes evident that the age group 25 to 34 years represents the highest number of arrests for individuals of Black ethnicity. The trend for Black ethnicity indicates a decreasing curve from this age group onward. In contrast, for individuals of White ethnicity, the peak in arrests is observed in the age group 35 to 44 years. It is noteworthy that from age 45 to 65, the difference in the number of arrests between both ethnicities starts to converge.
 
 ```{r}
 #| warning: false
@@ -346,6 +335,7 @@ Examining Figure 4, which illustrates the dot plot for the number of arrests by 
 #| fig.height: 6
 #| fig.align: 'center'
 #| fig.pos: 'htb'
+#| label: fig-fig3
 # Bar plot
 
 table3_long <- pivot_longer(table3, cols = c("2020", "2021"), names_to = "year", values_to = "value")
@@ -355,11 +345,26 @@ ggplot(table3_long, aes(x = perceived_race, y = value, fill = factor(age_group))
   facet_wrap(~ year, scales = "free_y") +
   labs(title = "Bar Chart for the number of arrests by Age-Group for the year 2020, and 2021",
        x = "Perceived Race",
-       y = "Value",
+       y = "Number of People",
        fill = "Year") +
   theme_minimal() +
-  theme(legend.position = "right") + 
+  theme(legend.position = "bottom") + 
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Examining Figure 4 (see @fig-fig4), which illustrates the dot plot for the number of arrests by age group in the year 2020 and 2021 for the top two ethnic groups, "Black" and "White," it becomes evident that the age group 25 to 34 years represents the highest number of arrests for individuals of Black ethnicity. The trend for Black ethnicity indicates a decreasing curve from this age group onward. In contrast, for individuals of White ethnicity, the peak in arrests is observed in the age group 35 to 44 years. It is noteworthy that from age 45 to 65, the difference in the number of arrests between both ethnicities starts to converge.
+
+```{r}
+#| warning: false
+#| message: false
+#| echo: false
+#| eval: true
+#| fig.cap: "Scatter Plot for the number of arrests by Age-Group for the year 2020, and 2021"
+#| fig.width: 10
+#| fig.height: 6
+#| fig.align: 'center'
+#| fig.pos: 'htb'
+#| label: fig-fig4
 
 table3_ii <- table3 %>%
   filter(perceived_race %in% c("White", "Black")) %>%
@@ -369,20 +374,20 @@ table3_ii <- table3 %>%
 
 # Create a line Graph
 ggplot(table3_ii, aes(x = age_group, y = value, color = perceived_race)) +
-  geom_point() + 
-  geom_smooth(method = "loess", se = FALSE) +
+  geom_point(size = 3) +
   facet_wrap(~ year, scales = "free_y") +
   labs(title = "Scatter Plot for the number of arrests by Age-Group for the year 2021",
        x = "Age Group",
-       y = "Value",
-       color = "Perceived Race") +  # Change fill to color
+       y = "Number of People",
+       color = "Perceived Race") +
   theme_minimal() +
-  theme(legend.position = "right") +
+  theme(legend.position = "bottom") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
 ```
+
+
 ## Discussion
+
 
 
 ## References

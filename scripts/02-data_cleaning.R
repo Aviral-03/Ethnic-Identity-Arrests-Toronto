@@ -1,44 +1,63 @@
 #### Preamble ####
-# Purpose: Cleans the raw plane data recorded by two observers..... [...UPDATE THIS...]
-# Author: Rohan Alexander [...UPDATE THIS...]
-# Date: 6 April 2023 [...UPDATE THIS...]
-# Contact: rohan.alexander@utoronto.ca [...UPDATE THIS...]
+# Purpose: Downloads and saves the data from OpenData Toronto for Police Race and Identity Based Data Collection: Arrests & Strip Searches
+# Author: Aviral Bhardwaj
+# Date: 24 January 2024
+# Contact: aviral.bhardwaj@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: [...UPDATE THIS...]
-# Any other information needed? [...UPDATE THIS...]
+# Pre-requisites: none
+# Datasets: https://open.toronto.ca/dataset/police-race-and-identity-based-data-collection-arrests-strip-searches/
 
 #### Workspace setup ####
 library(tidyverse)
 
 #### Clean data ####
-raw_data <- read_csv("inputs/data/plane_data.csv")
+# Reading the data
+data <- read.csv("../data/raw_data.csv")
 
-cleaned_data <-
-  raw_data |>
-  janitor::clean_names() |>
-  select(wing_width_mm, wing_length_mm, flying_time_sec_first_timer) |>
-  filter(wing_width_mm != "caw") |>
-  mutate(
-    flying_time_sec_first_timer = if_else(flying_time_sec_first_timer == "1,35",
-                                   "1.35",
-                                   flying_time_sec_first_timer)
-  ) |>
-  mutate(wing_width_mm = if_else(wing_width_mm == "490",
-                                 "49",
-                                 wing_width_mm)) |>
-  mutate(wing_width_mm = if_else(wing_width_mm == "6",
-                                 "60",
-                                 wing_width_mm)) |>
-  mutate(
-    wing_width_mm = as.numeric(wing_width_mm),
-    wing_length_mm = as.numeric(wing_length_mm),
-    flying_time_sec_first_timer = as.numeric(flying_time_sec_first_timer)
-  ) |>
-  rename(flying_time = flying_time_sec_first_timer,
-         width = wing_width_mm,
-         length = wing_length_mm
-         ) |> 
-  tidyr::drop_na()
+# Adjusting and cleaning the name of the variable
+cleaned_data <- data %>% 
+  clean_names() %>% 
+  clean_names(case = "snake")
 
-#### Save data ####
-write_csv(cleaned_data, "outputs/data/analysis_data.csv")
+cleaned_data <- cleaned_data |>
+  select(
+    arrest_year, perceived_race, age_group_at_arrest, youth_at_arrest_under_18_years, booked, search_reason_cause_injury, search_reason_assist_escape, search_reason_possess_weapons, search_reason_possess_evidence)
+
+# Combining the columns that are similar
+cleaned_data <- cleaned_data %>%
+  mutate(search_reason = case_when(
+    search_reason_cause_injury == 1 ~ "1",
+    search_reason_assist_escape == 1 ~ "1",
+    search_reason_possess_weapons == 1 ~ "1",
+    search_reason_possess_evidence == 1 ~ "1",
+    TRUE ~ "0"
+  ))
+
+# Rename the columns
+cleaned_data <- cleaned_data %>%
+  rename(
+    age_group = age_group_at_arrest,
+    youth_at_arrest_under_18_years = youth_at_arrest_under_18_years
+  )
+
+# Mutating the date for age groups involving Aged 17 years and younger and Aged 17 years and under essentially they mean the same thing
+cleaned_data <- cleaned_data %>%
+  mutate(age_group = case_when(
+    age_group == "Aged 17 years and younger" ~ "Aged 17 years and under",
+    age_group == "Aged 17 years and under" ~ "Aged 17 years and under",
+    TRUE ~ age_group
+  ))
+
+# Mutating for booked with NA values
+cleaned_data <- cleaned_data %>%
+  mutate(booked = case_when(
+    is.na(booked) ~ "0",
+    booked == 1 ~ "1",
+    TRUE ~ "Not Booked"
+  ))
+
+cleaned_data <- cleaned_data |>
+  select(
+    arrest_year, perceived_race, age_group, youth_at_arrest_under_18_years, booked, search_reason)
+
+write.csv(cleaned_data, "../data/cleaned_data.csv")
