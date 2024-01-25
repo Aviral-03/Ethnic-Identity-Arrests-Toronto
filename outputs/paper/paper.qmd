@@ -1,7 +1,7 @@
 ---
 title: "No Evidence of Bias in Arrests Made by the Toronto Police Service"
 author: "Aviral Bhardwaj"
-abstract: The ethnic identity of citizens arrested by the police has consistently been a topic of discussion, often highlighting the pronounced skewness of certain ethnic identities. This paper seeks to analyze data from the Toronto Open Data Portal to investigate whether there is any bias in arrests made by the Toronto Police Service between 2020 and 2021, while accounting for factors such as age, booked after arrest, and search on arrest. While the population distribution of various ethnic identities varies significantly, it was found that ..... Further analysis can provide valuable insights for policymakers, law enforcement agencies, and community advocates in fostering a more equitable society while emphasizing the importance of promoting transparency and accountability in policing.
+abstract: The ethnic identity of citizens arrested by police has consistently sparked discussion, highlighting skewness in certain ethnicities. This paper analyzes Toronto Police Service arrest data from 2020 to 2021, considering factors such as age and search on arrest. While population distribution varies significantly, findings suggest no inherent bias in arrests. However, strict enforcement is consistent across all ethnicities and races, even when considering evidence of higher crime rates in specific groups. Further analysis can provide insights for policymakers, law enforcement, and community advocates, emphasizing the need for transparency and accountability in policing.
 date: today
 date-format: long
 number-sections: true
@@ -387,6 +387,23 @@ ggplot(table3_ii, aes(x = age_group, y = value, color = perceived_race)) +
 
 ## Discussion
 
+The analysis presented in this paper aimed to shed light on the potential bias in arrests made by the Toronto Police Service, specifically focusing on ethnic and identity-based groups. The findings from the data analysis provide valuable insights into the dynamics of law enforcement activities in the city.
+
+### Lack of Inherent Bias in Arrests
+
+Our analysis suggests no inherent bias in arrests made by the Toronto Police Service. The distribution of arrests across various ethnic and identity-based groups does not show a consistent pattern of discrimination. This observation is crucial, as it challenges the narrative surrounding racial bias in policing and suggests that strict enforcement is consistent across all ethnicities.
+
+### Age Group Dynamics
+
+The examination of age group dynamics in arrests provides additional nuances to the analysis. The age groups of 25 to 34 years and 35 to 44 years emerge as having the highest number of arrests in both 2020 and 2021. Interestingly, there is a noticeable decrease in arrests for these age groups from 2020 to 2021, suggesting potential shifts in law enforcement patterns.
+
+The detailed exploration of age groups within specific ethnicities, such as the comparison between "Black" and "White" ethnicities, reveals intriguing patterns. The peak in arrests for individuals of Black ethnicity occurs in the age group of 25 to 34 years, while for individuals of White ethnicity, the peak is observed in the age group of 35 to 44 years. This divergence in age-specific arrest patterns highlights the importance of considering intersectionality in understanding policing dynamics.
+
+### Implications for Policymaking and Community Engagement
+
+While the analysis in this paper provides valuable insights, it is essential to acknowledge its limitations. Further research and a more detailed comparison of specific ethnic groups are necessary for a comprehensive understanding of the data. Policymakers, law enforcement agencies, and community advocates can benefit from these insights by considering targeted interventions, policy adjustments, and community engagement efforts. The emphasis on transparency and accountability in policing remains crucial, as highlighted in report by the Toronto Police Services Board [@rTPSB2019].
+
+In conclusion, this analysis provides a foundation for informed discussions on policing practices in Toronto. It is a call for continued scrutiny, collaboration, and evidence-based policymaking to ensure fair and equitable law enforcement practices in this diverse and dynamic city.
 
 
 ## References

@@ -26,3 +26,118 @@ cleaned_data <- cleaned_data %>%
 ```
 
 In this code, `case_when` is used to create conditions for updating the "age_group" column, and it correctly checks for both "Aged 17 years and younger" and "Aged 17 years and under" conditions. The `TRUE ~ age_group` part ensures that if none of the specified conditions match, the original value is retained. Adjust it according to your specific needs.
+
+
+User:
+knitr::kable(
+  list(table1, table2),
+  caption = "Total Arrest vs Total Booked for Ethnic and Identity Based Groups for the year 2020, and 2021",
+  col.names = c("Ethinic and Identity Based Groups", "2020", "2021"),
+  booktabs = TRUE,
+  valign = "top"
+)
+
+is this correct?
+
+
+ChatGPT:
+
+The code you provided is close, but there is a small error in the col.names argument. The column names should match the number of columns in your tables. Assuming both table1 and table2 have three columns, the correct code would be:
+
+knitr::kable(
+  list(table1, table2),
+  caption = "Total Arrest vs Total Booked for Ethnic and Identity Based Groups for the year 2020, and 2021",
+  col.names = c("Ethinic and Identity Based Groups", "2020", "2021"),
+  booktabs = TRUE,
+  valign = "top"
+)
+Make sure to check that both table1 and table2 have three columns each, and adjust the col.names accordingly. If the tables have a different number of columns, you need to adjust the col.names accordingly.
+
+
+User:
+
+In a recent article published Toronto Police Services it is highlighted that "Black, East/Southeast Asian, Middle Eastern and Latino people were over-represented in reported use of force incidents compared to their presence in the enforcement action population." (@Fanfair2022) indicating that even though Toronto Police Services has been working towards a more equitable society, however there are still hints of racial bias in the arrests made by the Toronto Police Services. As we embark on this exploration, the data prompts critical questions about the socio-cultural, economic, and systemic factors that contribute to these observed patterns. This paper aims to contribute to a nuanced understanding of the dynamics of arrests in Toronto, providing insights that can inform targeted interventions, policy considerations, and community engagement efforts.
+
+fix the grammer
+
+ChatGPT:
+
+In a recent article published by the Toronto Police Services, it is highlighted that "Black, East/Southeast Asian, Middle Eastern, and Latino people were over-represented in reported use of force incidents compared to their presence in the enforcement action population" (@Fanfair2022). This indicates that, despite Toronto Police Services working towards a more equitable society, there are still hints of racial bias in the arrests made by the Toronto Police Services. As we embark on this exploration, the data prompts critical questions about the socio-cultural, economic, and systemic factors that contribute to these observed patterns. This paper aims to contribute to a nuanced understanding of the dynamics of arrests in Toronto, providing insights that can inform targeted interventions, policy considerations, and community engagement efforts.
+
+User:
+Table 1 (a) (@tbl-table1) provides a summary of our data, revealing the number of individuals arrested from each prominent ethnic group in the years 2020 and 2021. Table 2 (b) shows out-of all the people arrested from each ethinic idenitiy how many were actually booked under a criminal case.
+
+fix the grammer
+
+ChatGPT:
+
+Table 1 (a) (@tbl-table1) provides a summary of our data, revealing the number of individuals arrested from each prominent ethnic group in the years 2020 and 2021. Table 2 (b) shows, out of all the people arrested from each ethnic identity, how many were actually booked under a criminal case.
+
+User:
+convert this into r citation
+Jackson, Mariel. “Racial Identity in Policing Is More Complicated than We Think.” McCourt School of Public Policy, 21 July 2022, mccourt.georgetown.edu/news/racial-identity-in-policing/. Accessed 24 Jan. 2024.
+
+ChatGPT:
+To create a BibTeX citation for the provided web page, you can format it as follows:
+
+
+# BibTeX entry for the provided webpage
+webpage_citation <- '@misc{Jackson2022,
+  author = {Jackson, Mariel},
+  title = {Racial Identity in Policing Is More Complicated than We Think},
+  howpublished = {McCourt School of Public Policy},
+  year = {2022},
+  month = {July 21},
+  note = {Accessed: January 24, 2024},
+  url = {https://mccourt.georgetown.edu/news/racial-identity-in-policing/},
+}'
+
+# Print the BibTeX entry
+cat(webpage_citation)
+Replace the placeholder values such as "Jackson, Mariel," "Racial Identity in Policing Is More Complicated than We Think," the publication date ("July 21, 2022"), the URL (https://mccourt.georgetown.edu/news/racial-identity-in-policing/), and the "Accessed" date with the actual details from the webpage you are citing.
+
+You can use this generated BibTeX entry in your BibTeX file or R Markdown document as needed.
+
+
+User:
+ggplot(table3_ii, aes(x = age_group, y = value, color = perceived_race)) +
+  geom_point() +
+  facet_wrap(~ year, scales = "free_y") +
+  labs(title = "Scatter Plot for the number of arrests by Age-Group for the year 2021",
+       x = "Age Group",
+       y = "Value",
+       fill = "Perceived Race") +
+  theme_minimal() +
+  theme(legend.position = "right") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+add label to point
+To add labels to the points in your scatter plot, you can use the `geom_text()` function. Here's the modified code:
+
+```R
+# Assuming you have already created table3_ii as mentioned in your previous code
+
+# Create a scatter plot with labels
+ggplot(table3_ii, aes(x = age_group, y = value, color = perceived_race, label = perceived_race)) +
+  geom_point() +
+  geom_text(hjust = 1, vjust = 1.5) +  # Adjust the hjust and vjust as needed
+  facet_wrap(~ year, scales = "free_y") +
+  labs(title = "Scatter Plot for the number of arrests by Age-Group for the year 2021",
+       x = "Age Group",
+       y = "Value",
+       color = "Perceived Race") +
+  theme_minimal() +
+  theme(legend.position = "right") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+In this code:
+
+- I added `label = perceived_race` to the `aes()` function to specify the variable for labels.
+- I included `geom_text()` to display the labels. You can adjust the `hjust` and `vjust` parameters to control the position of the labels relative to the points.
+
+This should add labels to each point in your scatter plot based on the `perceived_race` variable.
+
+
+
+
